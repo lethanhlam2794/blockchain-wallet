@@ -1,7 +1,16 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 
 import { Audit } from '@shared/models/audit.model';
 import { ENTITY_STATUS } from '@shared/constants';
+import { User } from '@modules/user/user.model';
 
 @Entity('wallets')
 @Unique(['address'])
@@ -9,6 +18,14 @@ import { ENTITY_STATUS } from '@shared/constants';
 export class Wallet extends Audit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'uuid', name: 'user_id' })
+  @Index()
+  userId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'varchar', length: 255 })
   address: string;
@@ -28,4 +45,3 @@ export class Wallet extends Audit {
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
 }
-

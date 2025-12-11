@@ -52,6 +52,10 @@ export interface FindOptions {
   relations?: FindOptionsRelations<any>;
   order?: FindOptionsOrder<any>;
   withDeleted?: boolean;
+  sort?: Record<string, number>;
+  populate?: any[];
+  forceReload?: boolean;
+  lean?: boolean;
 }
 
 export interface UserAuthProfile {

@@ -10,16 +10,27 @@ import {
   NotFoundException,
   BadRequestException,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { WalletService } from './wallet.service';
 import { CreateWalletDto, ImportWalletDto } from './wallet.dto';
 import { Wallet } from './wallet.model';
 import { getRefCode } from '@shared/decorators/refcode';
 import { AppRequest } from '@shared/interfaces';
+import { RequestUser } from '@shared/decorators/request-user';
+import { AuthGuard } from '@modules/auth/auth.guard';
 
 @ApiTags('Wallet')
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
 @Controller('wallets')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
@@ -32,9 +43,13 @@ export class WalletController {
     description: 'Tạo ví thành công',
     type: Wallet,
   })
-  async createWallet(@Body() dto: CreateWalletDto, @Req() request: AppRequest) {
+  async createWallet(
+    @Body() dto: CreateWalletDto,
+    @Req() request: AppRequest,
+    @RequestUser() user: any,
+  ) {
     const refCode = getRefCode(request);
-    const wallet = await this.walletService.createWallet(dto, refCode);
+    const wallet = await this.walletService.createWallet(dto, user.id, refCode);
     return {
       success: true,
       data: wallet,
@@ -49,9 +64,13 @@ export class WalletController {
     description: 'Import ví thành công',
     type: Wallet,
   })
-  async importWallet(@Body() dto: ImportWalletDto, @Req() request: AppRequest) {
+  async importWallet(
+    @Body() dto: ImportWalletDto,
+    @Req() request: AppRequest,
+    @RequestUser() user: any,
+  ) {
     const refCode = getRefCode(request);
-    const wallet = await this.walletService.importWallet(dto, refCode);
+    const wallet = await this.walletService.importWallet(dto, user.id, refCode);
     return {
       success: true,
       data: wallet,
@@ -65,8 +84,8 @@ export class WalletController {
     description: 'Danh sách ví',
     type: [Wallet],
   })
-  async getAllWallets(): Promise<Wallet[]> {
-    return this.walletService.findAllActive();
+  async getAllWallets(@RequestUser() user: any): Promise<Wallet[]> {
+    return this.walletService.findAllActive(user.id);
   }
 
   @Get(':address')
@@ -76,8 +95,11 @@ export class WalletController {
     description: 'Thông tin ví',
     type: Wallet,
   })
-  async getWalletByAddress(@Param('address') address: string): Promise<Wallet> {
-    const wallet = await this.walletService.findByAddress(address);
+  async getWalletByAddress(
+    @Param('address') address: string,
+    @RequestUser() user: any,
+  ): Promise<Wallet> {
+    const wallet = await this.walletService.findByAddress(address, user.id);
     if (!wallet) {
       throw new NotFoundException(`Không tìm thấy ví với address: ${address}`);
     }
@@ -122,6 +144,7 @@ export class WalletController {
   async getWalletBalances(
     @Param('address') address: string,
     @Query('chainId') chainId: string,
+    @RequestUser() user: any,
   ) {
     const chainIdNum = parseInt(chainId, 10);
     if (isNaN(chainIdNum)) {
@@ -131,6 +154,7 @@ export class WalletController {
     return this.walletService.getWalletBalances(
       address.toLowerCase(),
       chainIdNum,
+      user.id,
     );
   }
 }

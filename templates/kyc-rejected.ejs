@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>KYC Verification Failed</title>
+    <style>
+      body {
+        background-color: #f6f6f6;
+        font-family: sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      table {
+        width: 100%;
+        border-spacing: 0;
+      }
+
+      table td {
+        font-family: sans-serif;
+        font-size: 14px;
+        vertical-align: top;
+      }
+
+      .body {
+        background-color: #f6f6f6;
+        width: 100%;
+      }
+
+      .container {
+        display: block;
+        margin: 0 auto !important;
+        max-width: 580px;
+        padding: 10px;
+        width: 580px;
+      }
+
+      .content {
+        box-sizing: border-box;
+        display: block;
+        margin: 0 auto;
+        max-width: 580px;
+        padding: 10px;
+      }
+
+      .main {
+        background: #ffffff;
+        border-radius: 3px;
+        width: 100%;
+      }
+
+      .wrapper {
+        box-sizing: border-box;
+        padding: 0 48px 24px;
+      }
+
+      .footer {
+        clear: both;
+        padding: 24px 48px;
+        text-align: left;
+        width: 100%;
+        background-color: #eee;
+      }
+
+      .footer p,
+      .footer a {
+        color: #08090a;
+        font-size: 12px;
+        text-align: left;
+        margin: 0 !important;
+      }
+
+      h2 {
+        color: #e74c3c;
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0 0 16px 0 !important;
+        text-align: center;
+      }
+
+      p {
+        margin: 0 0 15px;
+        font-size: 14px;
+        color: #08090a;
+      }
+
+      .banner {
+        padding: 24px 48px;
+        text-align: center;
+      }
+
+      .banner img {
+        max-width: 100%;
+        border-radius: 6px;
+      }
+
+      .reasons-title {
+        font-weight: bold;
+        margin: 15px 0 8px 0;
+      }
+
+      ul.reasons {
+        margin: 0 0 15px 20px;
+        padding: 0;
+        color: #08090a;
+      }
+
+      ul.reasons li {
+        margin-bottom: 6px;
+      }
+
+      /* Responsive styles */
+      @media only screen and (max-width: 620px) {
+        .wrapper,
+        .footer,
+        .banner {
+          padding: 12px 24px !important;
+        }
+
+        h2 {
+          font-size: 18px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <table border="0" cellpadding="0" cellspacing="0" class="body">
+      <tbody>
+        <tr>
+          <td>&nbsp;</td>
+          <td class="container">
+            <div class="content">
+              <table class="main">
+                <!-- Header -->
+                <tr>
+                  <td class="banner">
+                    <img
+                      src="https://vinachain-prod.oss-ap-southeast-7.aliyuncs.com/assets/images/emails/bg-email.png"
+                      alt="KYC Banner"
+                    />
+                  </td>
+                </tr>
+                <!-- Content -->
+                <tr>
+                  <td class="wrapper">
+                    <h2>KYC Verification Failed</h2>
+                    <p>
+                      We regret to inform you that your KYC verification could
+                      not be completed successfully.
+                    </p>
+                    <p>
+                      After reviewing your submitted documents, we found the
+                      following issues:
+                    </p>
+
+                    <!-- Reasons dynamic -->
+                    <p class="reasons-title">Reasons:</p>
+                    <ul class="reasons">
+                      <li><%= reason %></li>
+                    </ul>
+
+                    <p>
+                      To proceed, please re-submit your documents through the
+                      KYC portal.
+                    </p>
+                  </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                  <td class="footer">
+                    <p>
+                      If you have any questions, please do not hesitate to
+                      contact our support team.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+          <td>&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

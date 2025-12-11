@@ -28,7 +28,11 @@ export class WalletService extends BaseCRUDService<Wallet> {
   /**
    * Tạo ví EVM mới
    */
-  async createWallet(dto: CreateWalletDto, refCode?: string): Promise<Wallet> {
+  async createWallet(
+    dto: CreateWalletDto,
+    userId: string,
+    refCode?: string,
+  ): Promise<Wallet> {
     // Tạo ví mới bằng ethers
     const ethersWallet = EthersWallet.createRandom();
 
@@ -36,11 +40,11 @@ export class WalletService extends BaseCRUDService<Wallet> {
     const address = ethersWallet.address.toLowerCase();
 
     // Kiểm tra xem address đã tồn tại chưa (rất hiếm nhưng nên kiểm tra)
-    const existingWallet = await this.findByAddress(address);
+    const existingWallet = await this.findByAddress(address, userId);
     if (existingWallet) {
       this.logger.warn(`Address đã tồn tại: ${address}, tạo lại ví mới...`);
       // Nếu đã tồn tại, tạo lại ví mới (rất hiếm xảy ra)
-      return this.createWallet(dto, refCode);
+      return this.createWallet(dto, userId, refCode);
     }
 
     // Tạo refCode nếu chưa có
@@ -54,6 +58,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
 
     // Lưu vào database
     const wallet = await this.model.save({
+      userId,
       address: address,
       privateKey: ethersWallet.privateKey,
       status: ENTITY_STATUS.ACTIVE,
@@ -72,7 +77,11 @@ export class WalletService extends BaseCRUDService<Wallet> {
   /**
    * Import ví từ private key
    */
-  async importWallet(dto: ImportWalletDto, refCode?: string): Promise<Wallet> {
+  async importWallet(
+    dto: ImportWalletDto,
+    userId: string,
+    refCode?: string,
+  ): Promise<Wallet> {
     try {
       // Tạo wallet từ private key
       const ethersWallet = new EthersWallet(dto.privateKey);
@@ -81,7 +90,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
       const address = ethersWallet.address.toLowerCase();
 
       // Kiểm tra xem ví đã tồn tại chưa
-      const existingWallet = await this.findByAddress(address);
+      const existingWallet = await this.findByAddress(address, userId);
       if (existingWallet) {
         this.logger.warn(`Ví với address ${address} đã tồn tại`);
         // Cập nhật thông tin nếu có thay đổi
@@ -111,6 +120,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
 
       // Lưu vào database
       const wallet = await this.model.save({
+        userId,
         address: address,
         privateKey: ethersWallet.privateKey,
         status: ENTITY_STATUS.ACTIVE,
@@ -133,26 +143,39 @@ export class WalletService extends BaseCRUDService<Wallet> {
   /**
    * Lấy ví theo address
    */
-  async findByAddress(address: string): Promise<Wallet | null> {
-    return this.model.findOne({
-      where: { address: address.toLowerCase() },
-    });
+  async findByAddress(
+    address: string,
+    userId?: string,
+  ): Promise<Wallet | null> {
+    const where: any = { address: address.toLowerCase() };
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    return this.model.findOne({ where });
   }
 
   /**
    * Kiểm tra ví đã tồn tại chưa
    */
-  async isAddressExists(address: string): Promise<boolean> {
-    const wallet = await this.findByAddress(address);
+  async isAddressExists(address: string, userId?: string): Promise<boolean> {
+    const wallet = await this.findByAddress(address, userId);
     return !!wallet;
   }
 
   /**
    * Lấy tất cả ví active
    */
-  async findAllActive(): Promise<Wallet[]> {
+  async findAllActive(userId?: string): Promise<Wallet[]> {
+    const where: any = { status: ENTITY_STATUS.ACTIVE };
+
+    if (userId) {
+      where.userId = userId;
+    }
+
     return this.model.find({
-      where: { status: ENTITY_STATUS.ACTIVE },
+      where,
       order: { createdAt: 'DESC' },
     });
   }
@@ -163,6 +186,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
   async getWalletBalances(
     address: string,
     chainId: number,
+    userId?: string,
   ): Promise<{
     address: string;
     chainId: number;
@@ -175,6 +199,14 @@ export class WalletService extends BaseCRUDService<Wallet> {
     }>;
   }> {
     try {
+      if (userId) {
+        const wallet = await this.findByAddress(address, userId);
+
+        if (!wallet) {
+          throw new BadRequestException('Ví không thuộc quyền sở hữu');
+        }
+      }
+
       // Validate address
       if (!ethers.isAddress(address)) {
         throw new BadRequestException('Địa chỉ không hợp lệ');

@@ -1,5 +1,10 @@
-export const EMAIL_REGEX = /^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+export const newEmailRegex =
+  /^[a-zA-Z0-9]+(.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+.[a-zA-Z]{2,}$/;
 
-export const isEmailValid = (email: string) => {
-  return EMAIL_REGEX.test(email);
-};
+export function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function isEmail(data: string): boolean {
+  return newEmailRegex.test(data);
+}
