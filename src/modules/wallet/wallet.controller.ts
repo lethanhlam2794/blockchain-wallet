@@ -21,7 +21,12 @@ import {
 } from '@nestjs/swagger';
 
 import { WalletService } from './wallet.service';
-import { CreateWalletDto, ImportWalletDto } from './wallet.dto';
+import {
+  CreateWalletDto,
+  ImportWalletDto,
+  TransferTokenDto,
+  SweepTokensDto,
+} from './wallet.dto';
 import { Wallet } from './wallet.model';
 import { getRefCode } from '@shared/decorators/refcode';
 import { AppRequest } from '@shared/interfaces';
@@ -38,11 +43,6 @@ export class WalletController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Tạo ví EVM mới' })
-  @ApiResponse({
-    status: 201,
-    description: 'Tạo ví thành công',
-    type: Wallet,
-  })
   async createWallet(
     @Body() dto: CreateWalletDto,
     @Req() request: AppRequest,
@@ -59,11 +59,6 @@ export class WalletController {
   @Post('import')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Import ví từ private key' })
-  @ApiResponse({
-    status: 201,
-    description: 'Import ví thành công',
-    type: Wallet,
-  })
   async importWallet(
     @Body() dto: ImportWalletDto,
     @Req() request: AppRequest,
@@ -81,11 +76,6 @@ export class WalletController {
   @ApiOperation({
     summary: 'Lấy danh sách tất cả ví active (không có private key)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Danh sách ví',
-    type: [Wallet],
-  })
   async getAllWallets(@RequestUser() user: any) {
     const wallets = await this.walletService.findAllActive(user.id);
     // Loại bỏ private key khỏi response
@@ -98,11 +88,6 @@ export class WalletController {
   @Get(':address')
   @ApiOperation({
     summary: 'Lấy thông tin ví theo address (có private key đã giải mã)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Thông tin ví',
-    type: Wallet,
   })
   async getWalletByAddress(
     @Param('address') address: string,
@@ -129,30 +114,6 @@ export class WalletController {
     type: Number,
     example: 97,
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Số dư của ví',
-    schema: {
-      type: 'object',
-      properties: {
-        address: { type: 'string' },
-        chainId: { type: 'number' },
-        nativeCurrency: { type: 'string' },
-        balances: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              symbol: { type: 'string' },
-              name: { type: 'string' },
-              balance: { type: 'string' },
-              type: { type: 'string', enum: ['native', 'erc20'] },
-            },
-          },
-        },
-      },
-    },
-  })
   async getWalletBalances(
     @Param('address') address: string,
     @Query('chainId') chainId: string,
@@ -168,5 +129,37 @@ export class WalletController {
       chainIdNum,
       user.id,
     );
+  }
+
+  @Post('transfer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Chuyển token từ ví này sang ví khác' })
+  async transferToken(
+    @Body() dto: TransferTokenDto,
+    @RequestUser() user: any,
+    @Req() request: AppRequest,
+  ) {
+    const refCode = getRefCode(request);
+    return {
+      success: true,
+      data: await this.walletService.transferToken(dto, user.id, refCode),
+    };
+  }
+
+  @Post('sweep')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Gom tất cả token từ các ví của user vào 1 ví đích',
+  })
+  async sweepTokens(
+    @Body() dto: SweepTokensDto,
+    @RequestUser() user: any,
+    @Req() request: AppRequest,
+  ) {
+    const refCode = getRefCode(request);
+    return {
+      success: true,
+      data: await this.walletService.sweepTokens(dto, user.id, refCode),
+    };
   }
 }

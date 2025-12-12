@@ -6,6 +6,7 @@ import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 import { TokenModule } from '../token/token.module';
 import { BlockchainConfigModule } from '../blockchain-config/blockchain-config.module';
+import { BlockchainCallModule } from '../blockchain-call/blockchain-call.module';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 
@@ -14,6 +15,7 @@ import { UserModule } from '../user/user.module';
     TypeOrmModule.forFeature([Wallet]),
     TokenModule,
     BlockchainConfigModule,
+    BlockchainCallModule,
     AuthModule,
     UserModule,
   ],

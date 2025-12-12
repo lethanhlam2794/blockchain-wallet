@@ -402,6 +402,11 @@ export enum BLOCKCHAIN_NETWORK {
   VNC = 'vnc',
 }
 
+export enum SWEEP_TYPE {
+  NATIVE = 'native',
+  TOKEN = 'token',
+}
+
 export enum BALANCE_ACTION {
   CREDIT = 'credit',
   DEBIT = 'debit',
