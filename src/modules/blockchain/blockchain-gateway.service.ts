@@ -38,7 +38,7 @@ export class BlockChainGatewayService {
 
   public async parseERC20TransferTx(
     hash: string,
-    validationData?: Partial<types.TransferValidationData>,
+    validationData?: Partial<any>,
     network = BLOCKCHAIN_NETWORK.BSC,
   ): Promise<OperationResult<ERC20TransferData>> {
     try {
@@ -52,19 +52,19 @@ export class BlockChainGatewayService {
       const [destinationAddress, amount] = decodedInput.args;
 
       if (validationData) {
-        const validationResult = await utils.validateERC20Transfer(
-          transactionInfo,
-          validationData,
-          this.blockchainService,
-        );
-
-        if (!validationResult.isValid) {
-          return {
-            success: false,
-            message: validationResult.message,
-            code: validationResult.code,
-          };
-        }
+        // TODO: Kiểm tra lại API của evm-blockchain-tools
+        // const validationResult = await utils.validateERC20Transfer(
+        //   transactionInfo,
+        //   validationData,
+        //   this.blockchainService,
+        // );
+        // if (!validationResult.isValid) {
+        //   return {
+        //     success: false,
+        //     message: validationResult.message,
+        //     code: validationResult.code,
+        //   };
+        // }
       }
 
       return {

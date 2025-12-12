@@ -1,6 +1,9 @@
 import {
+  AuditService,
   AxiosHttpService,
+  CacheService,
   RedisService,
+  SET_CACHE_POLICY,
   stringUtils,
   workflows,
 } from 'mvc-common-toolkit';
@@ -61,13 +64,36 @@ const syncTaskQueueProvider: Provider = {
   },
 };
 
+const auditServiceProvider: Provider = {
+  provide: INJECTION_TOKEN.AUDIT_SERVICE,
+  useFactory: (cacheService: CacheService) => {
+    const auditGateway = {
+      publish: async (log: any) => {
+        // Simple implementation: store audit logs in cache
+        await cacheService.set(`audit:${Date.now()}`, JSON.stringify(log), {
+          policy: SET_CACHE_POLICY.WITH_TTL,
+          value: 86400, // 24 hours
+        });
+      },
+    };
+    return new AuditService(auditGateway);
+  },
+  inject: [INJECTION_TOKEN.REDIS_SERVICE],
+};
+
 @Global()
 @Module({
-  providers: [httpServiceProvider, redisServiceProvider, syncTaskQueueProvider],
+  providers: [
+    httpServiceProvider,
+    redisServiceProvider,
+    syncTaskQueueProvider,
+    auditServiceProvider,
+  ],
   exports: [
     INJECTION_TOKEN.HTTP_SERVICE,
     INJECTION_TOKEN.REDIS_SERVICE,
     INJECTION_TOKEN.SYNC_TASK_QUEUE,
+    INJECTION_TOKEN.AUDIT_SERVICE,
     JwtModuleProvider,
   ],
   imports: [JwtModuleProvider, CacheManagerModule],

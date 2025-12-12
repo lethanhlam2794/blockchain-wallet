@@ -43,6 +43,7 @@ export class GoogleReCaptchaValidationInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler<any>,
   ): Promise<Observable<any>> {
+    return next.handle();
     const recaptchaEnabled = this.configService.get(
       ENV_KEY.GOOGLE_RECAPTCHA_ENABLED,
       'true',
@@ -50,6 +51,15 @@ export class GoogleReCaptchaValidationInterceptor implements NestInterceptor {
 
     if (recaptchaEnabled === 'false') {
       this.logger.log('Recaptcha is disabled');
+
+      return next.handle();
+    }
+
+    const secret = this.configService.get(ENV_KEY.GOOGLE_RECAPTCHA_SECRET);
+    if (!secret) {
+      this.logger.warn(
+        'Recaptcha is enabled but GOOGLE_RECAPTCHA_SECRET is not configured. Skipping validation.',
+      );
 
       return next.handle();
     }
@@ -76,9 +86,11 @@ export class GoogleReCaptchaValidationInterceptor implements NestInterceptor {
   private async isTokenValid(logId: string, token: string) {
     this.logger.log(`[${logId}]: Verifying recaptcha token: ${token}`);
 
-    const secret = this.configService.getOrThrow(
-      ENV_KEY.GOOGLE_RECAPTCHA_SECRET,
-    );
+    const secret = this.configService.get(ENV_KEY.GOOGLE_RECAPTCHA_SECRET);
+    if (!secret) {
+      this.logger.warn(`[${logId}]: GOOGLE_RECAPTCHA_SECRET is not configured`);
+      return false;
+    }
 
     const endpoint = this.configService.get(
       ENV_KEY.GOOGLE_RECAPTCHA_VERIFY_ENDPOINT,

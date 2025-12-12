@@ -31,12 +31,6 @@ export class User extends Audit {
   @Column({ type: 'boolean', default: false, name: 'is_verified' })
   isVerified: boolean;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
-  code: string;
-
-  @Column({ type: 'varchar', length: 20, nullable: true, name: 'referrer_code' })
-  referrerCode?: string;
-
   @Column({ type: 'text', nullable: true })
   passcode?: string;
 
@@ -67,7 +61,6 @@ export function extractPublicUserInfo(user: User) {
     id,
     email,
     username,
-    code,
     role,
     isVerified,
     walletAddress,
@@ -79,7 +72,6 @@ export function extractPublicUserInfo(user: User) {
     id,
     email,
     username,
-    code,
     role,
     isVerified,
     walletAddress,
@@ -87,4 +79,3 @@ export function extractPublicUserInfo(user: User) {
     updatedAt,
   };
 }
-

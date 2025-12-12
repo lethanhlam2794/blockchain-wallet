@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { Wallet as EthersWallet, ethers } from 'ethers';
 import { stringUtils } from 'mvc-common-toolkit';
@@ -8,6 +9,11 @@ import { ENTITY_STATUS } from '@shared/constants';
 import { BaseCRUDService } from '@shared/services/base-crud.service';
 import { TokenService } from '../token/token.service';
 import { BlockchainConfigService } from '../blockchain-config/blockchain-config.service';
+import {
+  encryptPrivateKey,
+  decryptPrivateKey,
+  getEncryptionKey,
+} from '@shared/utils/encrypt-private-key';
 
 import { Wallet } from './wallet.model';
 import { CreateWalletDto, ImportWalletDto } from './wallet.dto';
@@ -21,6 +27,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
     walletRepository: Repository<Wallet>,
     private readonly tokenService: TokenService,
     private readonly blockchainConfigService: BlockchainConfigService,
+    private readonly configService: ConfigService,
   ) {
     super(walletRepository);
   }
@@ -56,11 +63,18 @@ export class WalletService extends BaseCRUDService<Wallet> {
       refCode: finalRefCode,
     };
 
+    // Mã hóa private key trước khi lưu
+    const encryptionKey = getEncryptionKey(this.configService);
+    const encryptedPrivateKey = encryptPrivateKey(
+      ethersWallet.privateKey,
+      encryptionKey,
+    );
+
     // Lưu vào database
     const wallet = await this.model.save({
       userId,
       address: address,
-      privateKey: ethersWallet.privateKey,
+      privateKey: encryptedPrivateKey,
       status: ENTITY_STATUS.ACTIVE,
       label: dto.label,
       description: dto.description,
@@ -71,7 +85,15 @@ export class WalletService extends BaseCRUDService<Wallet> {
       `Đã tạo ví mới: ${wallet.address}, refCode: ${finalRefCode}`,
     );
 
-    return wallet;
+    // Trả về wallet với private key đã giải mã để user có thể lưu lại
+    const decryptedPrivateKey = decryptPrivateKey(
+      wallet.privateKey,
+      encryptionKey,
+    );
+    return {
+      ...wallet,
+      privateKey: decryptedPrivateKey,
+    };
   }
 
   /**
@@ -118,11 +140,18 @@ export class WalletService extends BaseCRUDService<Wallet> {
         refCode: finalRefCode,
       };
 
+      // Mã hóa private key trước khi lưu
+      const encryptionKey = getEncryptionKey(this.configService);
+      const encryptedPrivateKey = encryptPrivateKey(
+        ethersWallet.privateKey,
+        encryptionKey,
+      );
+
       // Lưu vào database
       const wallet = await this.model.save({
         userId,
         address: address,
-        privateKey: ethersWallet.privateKey,
+        privateKey: encryptedPrivateKey,
         status: ENTITY_STATUS.ACTIVE,
         label: dto.label,
         description: dto.description,
@@ -131,7 +160,15 @@ export class WalletService extends BaseCRUDService<Wallet> {
 
       this.logger.log(`Đã import ví: ${wallet.address}`);
 
-      return wallet;
+      // Trả về wallet với private key đã giải mã để confirm
+      const decryptedPrivateKey = decryptPrivateKey(
+        wallet.privateKey,
+        encryptionKey,
+      );
+      return {
+        ...wallet,
+        privateKey: decryptedPrivateKey,
+      };
     } catch (error) {
       this.logger.error(`Lỗi khi import ví: ${error.message}`, error.stack);
       throw new BadRequestException(
@@ -141,7 +178,7 @@ export class WalletService extends BaseCRUDService<Wallet> {
   }
 
   /**
-   * Lấy ví theo address
+   * Lấy ví theo address (không giải mã private key)
    */
   async findByAddress(
     address: string,
@@ -154,6 +191,39 @@ export class WalletService extends BaseCRUDService<Wallet> {
     }
 
     return this.model.findOne({ where });
+  }
+
+  /**
+   * Lấy ví theo address và giải mã private key
+   */
+  async findByAddressWithDecryptedKey(
+    address: string,
+    userId?: string,
+  ): Promise<Wallet | null> {
+    const wallet = await this.findByAddress(address, userId);
+    if (!wallet) {
+      return null;
+    }
+
+    // Giải mã private key
+    const encryptionKey = getEncryptionKey(this.configService);
+    try {
+      const decryptedPrivateKey = decryptPrivateKey(
+        wallet.privateKey,
+        encryptionKey,
+      );
+      return {
+        ...wallet,
+        privateKey: decryptedPrivateKey,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Lỗi khi giải mã private key cho wallet ${address}: ${error.message}`,
+      );
+      // Nếu lỗi giải mã, có thể là dữ liệu cũ chưa được mã hóa
+      // Trả về wallet với private key gốc (để backward compatibility)
+      return wallet;
+    }
   }
 
   /**

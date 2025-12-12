@@ -19,10 +19,6 @@ export class UserService extends BaseCRUDService<User> {
     super(userRepository);
   }
 
-  public generateReferralCode(): string {
-    return stringUtils.generateRandomId();
-  }
-
   public async getById(id: string): Promise<User> {
     return this.findByID(id);
   }
@@ -42,7 +38,9 @@ export class UserService extends BaseCRUDService<User> {
     return this.getById(id);
   }
 
-  public async verifyUserUniqueness(dto: RegisterDTO): Promise<OperationResult> {
+  public async verifyUserUniqueness(
+    dto: RegisterDTO,
+  ): Promise<OperationResult> {
     if (dto.email) {
       const emailExists = await this.model.exists({
         where: { email: dto.email.toLowerCase() },
@@ -76,32 +74,6 @@ export class UserService extends BaseCRUDService<User> {
     return { success: true };
   }
 
-  public async isReferrerValid(
-    refCode?: string,
-  ): Promise<OperationResult<{ isValid: boolean; code?: string }>> {
-    if (!refCode) {
-      return { success: true, data: { isValid: true } };
-    }
-
-    const referrer = await this.getOne({ code: refCode });
-
-    if (!referrer) {
-      return {
-        success: true,
-        data: { isValid: false, code: ERR_CODE.REFERRAL_CODE_NOT_FOUND },
-      };
-    }
-
-    if (referrer.status !== ENTITY_STATUS.ACTIVE) {
-      return {
-        success: true,
-        data: { isValid: false, code: ERR_CODE.ACCOUNT_DEACTIVATED },
-      };
-    }
-
-    return { success: true, data: { isValid: true } };
-  }
-
   public async createUserPasscode(
     user: UserAuthProfile,
     dto: UserPasscodeDTO,
@@ -112,4 +84,3 @@ export class UserService extends BaseCRUDService<User> {
     return { success: true };
   }
 }
-

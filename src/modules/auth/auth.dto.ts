@@ -89,11 +89,6 @@ export class RegisterDTO extends UserPasscodeDTO {
   @MinLength(8)
   @MaxLength(60)
   password: string;
-
-  @ApiProperty({
-    example: 'C70803DEA0',
-  })
-  refCode: string;
 }
 
 export class RegisterFirstUserDTO {

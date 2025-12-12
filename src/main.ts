@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { RefCodeInterceptor } from '@shared/interceptors/refcode.interceptor';
+import { HttpLoggingInterceptor } from '@shared/interceptors/http-logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,8 +17,11 @@ async function bootstrap() {
     }),
   );
 
-  // Global interceptor để tự động tạo refCode cho mọi request
-  app.useGlobalInterceptors(new RefCodeInterceptor());
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new RefCodeInterceptor(),
+    new HttpLoggingInterceptor(),
+  );
 
   // Swagger configuration
   const config = new DocumentBuilder()
@@ -25,6 +29,7 @@ async function bootstrap() {
     .setDescription('API documentation for Ethereum operations')
     .setVersion('1.0')
     .addTag('ether')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

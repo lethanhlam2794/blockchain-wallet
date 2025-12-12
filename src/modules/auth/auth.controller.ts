@@ -75,21 +75,6 @@ export class AuthController {
       return duplicationCheck;
     }
 
-    const validateReferrerResult = await this.userService.isReferrerValid(
-      dto.refCode,
-    );
-    if (!validateReferrerResult.success) {
-      return validateReferrerResult;
-    }
-
-    if (!validateReferrerResult.data.isValid) {
-      return {
-        success: false,
-        message: 'invalid referral data',
-        code: validateReferrerResult.data.code,
-      };
-    }
-
     const registerResult = await this.authService.register(
       stringUtils.generateRandomId(),
       dto,

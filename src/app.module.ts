@@ -9,6 +9,10 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { TokenModule } from './modules/token/token.module';
 import { SignatureModule } from './modules/signature/signature.module';
 import { BlockchainCallModule } from './modules/blockchain-call/blockchain-call.module';
+import { UserModule } from './modules/user/user.module';
+import { GlobalModule } from './modules/global.module';
+import { MailModule } from './modules/mail/mail.module';
+import { SystemRolesModule } from './modules/system-roles/system-roles.module';
 
 @Module({
   imports: [
@@ -32,9 +36,13 @@ import { BlockchainCallModule } from './modules/blockchain-call/blockchain-call.
       }),
       inject: [ConfigService],
     }),
+    GlobalModule,
+    MailModule,
+    SystemRolesModule,
     BlockchainConfigModule,
     BlockChainModule,
     EtherModule,
+    UserModule,
     WalletModule,
     TokenModule,
     SignatureModule,

@@ -59,15 +59,12 @@ export class AuthService {
   ): Promise<OperationResult> {
     try {
       const passwordHashed = await bcryptHelper.hash(data.password);
-      const newReferralCode = this.userService.generateReferralCode();
       const hashedPasscode = await bcryptHelper.hash(data.passcode);
 
       const newUser = await this.userService.create({
         email: data.email.toLowerCase(),
         username: data.username.toLowerCase(),
         password: passwordHashed,
-        referrerCode: data.refCode,
-        code: newReferralCode,
         passcode: hashedPasscode,
       });
 
@@ -96,13 +93,11 @@ export class AuthService {
   ): Promise<OperationResult> {
     try {
       const passwordHashed = await bcryptHelper.hash(data.password);
-      const newReferralCode = this.userService.generateReferralCode();
 
       const newUser = await this.userService.create({
         email: data.email.toLowerCase(),
         username: data.username.toLowerCase(),
         password: passwordHashed,
-        code: newReferralCode,
       });
 
       return {

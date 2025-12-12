@@ -78,18 +78,27 @@ export class WalletController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Lấy danh sách tất cả ví active' })
+  @ApiOperation({
+    summary: 'Lấy danh sách tất cả ví active (không có private key)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Danh sách ví',
     type: [Wallet],
   })
-  async getAllWallets(@RequestUser() user: any): Promise<Wallet[]> {
-    return this.walletService.findAllActive(user.id);
+  async getAllWallets(@RequestUser() user: any) {
+    const wallets = await this.walletService.findAllActive(user.id);
+    // Loại bỏ private key khỏi response
+    return wallets.map((wallet) => {
+      const { privateKey, ...walletWithoutKey } = wallet;
+      return walletWithoutKey;
+    });
   }
 
   @Get(':address')
-  @ApiOperation({ summary: 'Lấy thông tin ví theo address' })
+  @ApiOperation({
+    summary: 'Lấy thông tin ví theo address (có private key đã giải mã)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Thông tin ví',
@@ -99,7 +108,10 @@ export class WalletController {
     @Param('address') address: string,
     @RequestUser() user: any,
   ): Promise<Wallet> {
-    const wallet = await this.walletService.findByAddress(address, user.id);
+    const wallet = await this.walletService.findByAddressWithDecryptedKey(
+      address,
+      user.id,
+    );
     if (!wallet) {
       throw new NotFoundException(`Không tìm thấy ví với address: ${address}`);
     }
